@@ -1,0 +1,96 @@
+name: release
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Test icon
+        run: |
+          pip install --quiet pillow
+          python tests/test_icon.py
+
+      - name: Build WSL package
+        run: |
+          command -v pigz || sudo apt-get install -y -qq pigz
+          bash scripts/build-wsl.sh dist/marcy.wsl
+
+      - name: Test image and package
+        run: bash tests/image.sh marcy-wsl:build dist/marcy.wsl
+
+      - name: Scan for vulnerabilities
+        run: bash tests/vuln.sh marcy-wsl:build
+
+      # findings show up under the repo's Security > Code scanning tab, even when the scan fails
+      - name: Upload scan to GitHub Security
+        if: always() && hashFiles('dist/vuln-report.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: dist/vuln-report.sarif
+          category: trivy-image
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: marcy-wsl
+          path: dist/
+
+  test-installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test install.ps1
+        shell: pwsh
+        run: |
+          Install-Module Pester -MinimumVersion 5.5 -Force -Scope CurrentUser -SkipPublisherCheck
+          Import-Module Pester -MinimumVersion 5.5
+          $config = New-PesterConfiguration
+          $config.Run.Path = 'tests/install.Tests.ps1'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+  release:
+    needs: [build, test-installer]
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: marcy-wsl
+          path: dist/
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="v$(date -u +%Y.%m.%d)-${GITHUB_RUN_NUMBER}"
+          gh release create "$tag" \
+            dist/marcy.wsl dist/marcy.wsl.sha256 \
+            dist/vuln-report.json dist/vuln-report.sarif dist/vuln-summary.md dist/vuln-badge.json \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "marcy $tag" \
+            --notes-file dist/vuln-summary.md \
+            --generate-notes \
+            --latest

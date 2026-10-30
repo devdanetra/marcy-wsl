@@ -1,0 +1,17 @@
+default_mode "locked"
+
+theme "tokyo-night"
+default_shell "zsh"
+default_layout "compact"
+pane_frames false
+simplified_ui true
+show_startup_tips false
+
+mouse_mode true
+copy_on_select true
+copy_command "clip.exe"
+scroll_buffer_size 50000
+
+// Sessions survive closing the terminal; resurrect with 'zellij attach'
+session_serialization true
+on_force_close "detach"

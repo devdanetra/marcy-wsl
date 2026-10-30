@@ -1,0 +1,2 @@
+# Accepted findings, one ID per line with a reason and a review date, e.g.
+# CVE-2024-12345  # no fix upstream, not reachable from the shell (review 2026-12-01)

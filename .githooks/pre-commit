@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Run the test suites affected by the staged files.
+# Enable once per clone:  git config core.hooksPath .githooks
+# Skip the slow Docker build:  SKIP_IMAGE_TESTS=1 git commit ...
+set -euo pipefail
+
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+[[ -z $staged ]] && exit 0
+
+touches() { grep -qE "$1" <<<"$staged"; }
+suites=()
+
+touches '^(assets/|configs/motd\.sh|scripts/make-icon\.py|tests/test_icon\.py)' && suites+=(icon)
+touches '^(install\.ps1|tests/install\.Tests\.ps1)' && suites+=(installer)
+image_changed=; vuln_changed=
+touches '^(Dockerfile|wsl.*\.conf|mise\.toml|configs/|assets/|scripts/build-wsl\.sh|tests/image\.sh)' && image_changed=1
+touches '^(Dockerfile|mise\.toml|\.trivyignore|tests/vuln\.sh|tests/trivy-ignore\.rego|scripts/vuln-report\.py)' && vuln_changed=1
+if [[ -n $image_changed$vuln_changed && -n ${SKIP_IMAGE_TESTS:-} ]]; then
+  echo "pre-commit: skipping image tests and vulnerability scan (SKIP_IMAGE_TESTS set)"
+else
+  [[ -n $image_changed ]] && suites+=(image)
+  [[ -n $vuln_changed ]] && suites+=(vuln)
+fi
+
+((${#suites[@]})) || exit 0
+echo "pre-commit: running ${suites[*]} tests"
+exec bash "$(git rev-parse --show-toplevel)/scripts/test.sh" "${suites[@]}"

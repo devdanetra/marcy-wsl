@@ -16,8 +16,15 @@ jobs:
     permissions:
       contents: read
       security-events: write
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
+
+      # computed once here: baked into the image (/etc/marcy-release) and used as the release tag
+      - name: Compute version
+        id: version
+        run: echo "tag=v$(date -u +%Y.%m.%d)-${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-python@v5
         with:
@@ -29,6 +36,8 @@ jobs:
           python tests/test_icon.py
 
       - name: Build WSL package
+        env:
+          MARCY_VERSION: ${{ steps.version.outputs.tag }}
         run: |
           command -v pigz || sudo apt-get install -y -qq pigz
           bash scripts/build-wsl.sh dist/marcy.wsl
@@ -42,7 +51,7 @@ jobs:
       # findings show up under the repo's Security > Code scanning tab, even when the scan fails
       - name: Upload scan to GitHub Security
         if: always() && hashFiles('dist/vuln-report.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: dist/vuln-report.sarif
           category: trivy-image
@@ -83,8 +92,9 @@ jobs:
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.build.outputs.tag }}
         run: |
-          tag="v$(date -u +%Y.%m.%d)-${GITHUB_RUN_NUMBER}"
+          tag="$TAG"
           gh release create "$tag" \
             dist/marcy.wsl dist/marcy.wsl.sha256 \
             dist/vuln-report.json dist/vuln-report.sarif dist/vuln-summary.md dist/vuln-badge.json \

@@ -6,7 +6,8 @@ out=${1:-dist/marcy.wsl}
 image=marcy-wsl:build
 mkdir -p "$(dirname "$out")"
 
-docker build -t "$image" .
+# CI sets MARCY_VERSION to the release tag; local builds are "dev"
+docker build --build-arg MARCY_VERSION="${MARCY_VERSION:-dev}" -t "$image" .
 cid=$(docker create "$image")
 trap 'docker rm -f "$cid" >/dev/null' EXIT
 

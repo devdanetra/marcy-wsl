@@ -28,6 +28,7 @@ check "passwordless sudo"                in_image 'sudo -n true'
 check "ubuntu user removed"              in_image '! id ubuntu'
 check "wsl.conf enables systemd"         in_image 'grep -qx "systemd=true" /etc/wsl.conf'
 check "wsl.conf sets default user"       in_image 'grep -qx "default=marcy" /etc/wsl.conf'
+check "version recorded"                 in_image '[ -s /etc/marcy-release ]'
 check "shortcut icon path exists"        in_image 'icon=$(sed -n "s/^icon *= *//p" /etc/wsl-distribution.conf); [ -f "$icon" ]'
 check "icon is a valid .ico"             in_image '[ "$(head -c4 /usr/lib/wsl/marcy.ico | od -An -tx1 | tr -d " ")" = 00000100 ]'
 check "zsh starts without errors"        in_image '[ -z "$(zsh -i -c true 2>&1)" ]'
@@ -35,9 +36,15 @@ check "zsh puts mise tools on PATH"      in_image 'zsh -i -c "command -v starshi
 check "zsh aliases load"                 in_image 'zsh -i -c "alias ls k" | grep -q eza'
 check "motd renders"                    in_image 'NO_MOTD= motd | grep -q "\[+\]"'
 check "mise installed"                   in_image '~/.local/bin/mise --version'
-for tool in starship fzf zoxide eza bat kubectl helm k9s crictl terraform vault zellij gh rg uv go node npm; do
+for tool in starship fzf zoxide eza bat kubectl helm k9s crictl terraform vault zellij gh rg uv go node npm \
+            ansible ansible-playbook duf dust gping doggo; do
   check "mise tool: $tool"               in_image "~/.local/bin/mise which $tool"
 done
+# one check for all apt sysadmin commands, so a missing one is named in the failure output
+check "sysadmin commands installed"      in_image 'missing=; for c in vim nano less tree rsync wget file zip \
+  htop btop ncdu lsof strace pstree killall ps free iostat iotop-c \
+  ip ping dig traceroute mtr nc nmap tcpdump socat whois openssl ethtool; do
+  command -v $c >/dev/null || missing="$missing $c"; done; [ -z "$missing" ] || { echo "missing:$missing"; false; }'
 for plugin in zsh-autosuggestions zsh-syntax-highlighting zsh-completions fzf-tab; do
   check "zsh plugin: $plugin"            in_image "[ -d ~/.zsh/plugins/$plugin ]"
 done

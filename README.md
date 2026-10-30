@@ -14,6 +14,7 @@ You'll get the most out of marcy if you:
 
 - **run Kubernetes**: you use kubectl, helm and k9s every day, and sometimes need crictl on a node
 - **build infrastructure as code**: you work with Terraform and keep secrets in Vault
+- **look after servers and networks**: Ansible, plus the usual sysadmin toolkit for processes, disks, DNS and packet debugging
 - **also write code**: Go, Node, Python (via uv) and Rust are installed and ready
 - **want a fast terminal**: zsh with autosuggestions, fzf, zoxide, starship and zellij, set up out of the box
 - **want the same environment everywhere**: every machine, and everyone on the team, gets an identical, versioned setup from one command
@@ -45,6 +46,21 @@ Options:
 
 The installer downloads the latest [release](https://github.com/devdanetra/marcy-wsl/releases/latest), checks its SHA-256 checksum and registers it with WSL.
 
+### Updating
+
+The welcome banner shows your installed version and tells you when a newer release is out:
+
+```text
+[+] ver  v2026.10.29-3 :: update v2026.10.30-1 available
+```
+
+Updating replaces the whole distro, so back up anything you want to keep first:
+
+```powershell
+wsl --export marcy marcy-backup.tar                              # full backup of the current install
+& ([scriptblock]::Create((irm https://wsl.danetra.dev))) -Force  # install the latest release
+```
+
 ## Security
 
 Every release is scanned with [Trivy](https://trivy.dev) before it's published.
@@ -69,15 +85,18 @@ Ubuntu 24.04 with systemd enabled. The default user is `marcy`, with passwordles
 | Area | Tools |
 |---|---|
 | Kubernetes | kubectl, helm, k9s, crictl |
-| Infrastructure | terraform, vault |
-| Languages | go, node (LTS), rust, uv (Python) |
+| Infrastructure | terraform, vault, ansible (core) |
+| Sysadmin: processes and disks | htop, btop, ncdu, duf, dust, lsof, strace, iostat, iotop-c, pstree |
+| Sysadmin: network | ip, ping, dig, doggo, traceroute, mtr, gping, nc, socat, nmap, tcpdump, whois, ethtool, openssl |
+| Sysadmin: files | vim, nano, rsync, wget, tree, file, zip |
+| Languages | go, node (LTS, with the latest npm), rust (rustfmt, clippy), uv (Python) |
 | Git | gh |
 | Shell | zsh, starship, fzf, fzf-tab, zoxide, eza, bat, ripgrep, autosuggestions, syntax highlighting |
 | Terminal | zellij (sessions survive closing the terminal) |
 
 The Windows PATH is kept out of Linux, so Windows tools don't shadow Linux ones. `clip.exe` and `explorer.exe` (aliased to `open`) still work.
 
-Set `NO_MOTD=1` to hide the welcome banner.
+The welcome banner shows the system, uptime and load, LAN and public IP, and your marcy version compared with the latest release. It appears once per terminal, not in every zellij pane. The public IP is looked up on first start (trying several providers), then cached and refreshed in the background every 15 minutes. The release check runs in the background and is cached for 6 hours. Set `NO_MOTD=1` to hide it, or `MOTD_NOFROG=1` to hide just the frog.
 
 ## Development
 
@@ -98,6 +117,8 @@ Build a `.wsl` package locally (needs Docker):
 bash scripts/build-wsl.sh            # writes dist/marcy.wsl + .sha256
 wsl --install --from-file dist/marcy.wsl --name marcy-dev
 ```
+
+Local builds are marked `dev` (the banner shows "local build"). Set `MARCY_VERSION` to give one a real version number; CI uses the release tag.
 
 ### Tests
 

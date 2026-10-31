@@ -48,13 +48,13 @@ The installer downloads the latest [release](https://github.com/devdanetra/marcy
 
 ### Updating
 
-The welcome banner shows your installed version and tells you when a newer release is out:
+A new marcy release also brings new configs and new tools. The welcome banner will tell you when one is out:
 
 ```text
 [+] ver  v2026.10.29-3 :: update v2026.10.30-1 available
 ```
 
-Updating replaces the whole distro, so back up anything you want to keep first:
+Installing a release replaces the whole distro, so back up anything you want to keep first:
 
 ```powershell
 wsl --export marcy marcy-backup.tar                              # full backup of the current install
@@ -83,8 +83,8 @@ Vulnerabilities without a fix upstream are still listed in the reports, so you c
 Ubuntu 24.04 with systemd enabled. The default user is `marcy`, with passwordless sudo and zsh as the shell. All tools are managed by [mise](https://mise.jdx.dev), so `mise upgrade` keeps them current.
 
 | Area | Tools |
-|---|---|
-| Kubernetes | kubectl, helm, k9s, crictl |
+| --- | --- |
+| Kubernetes | k3s (local cluster), kubectl, helm, k9s, crictl, kubectx/kubens (`kctx`, `kns`), stern (multi-pod logs) |
 | Infrastructure | terraform, vault, ansible (core) |
 | Sysadmin: processes and disks | htop, btop, ncdu, duf, dust, lsof, strace, iostat, iotop-c, pstree |
 | Sysadmin: network | ip, ping, dig, doggo, traceroute, mtr, gping, nc, socat, nmap, tcpdump, whois, ethtool, openssl |
@@ -94,9 +94,29 @@ Ubuntu 24.04 with systemd enabled. The default user is `marcy`, with passwordles
 | Shell | zsh, starship, fzf, fzf-tab, zoxide, eza, bat, ripgrep, autosuggestions, syntax highlighting |
 | Terminal | zellij (sessions survive closing the terminal) |
 
-The Windows PATH is kept out of Linux, so Windows tools don't shadow Linux ones. `clip.exe` and `explorer.exe` (aliased to `open`) still work.
+The Windows PATH is kept out of Linux, so Windows tools don't shadow Linux ones. `clip.exe` and `explorer.exe` (aliased to `open`) still work, and so does `code .` if VS Code is installed on Windows (it opens the folder through the WSL extension).
 
 The welcome banner shows the system, uptime and load, LAN and public IP, and your marcy version compared with the latest release. It appears once per terminal, not in every zellij pane. The public IP is looked up on first start (trying several providers), then cached and refreshed in the background every 15 minutes. The release check runs in the background and is cached for 6 hours. Set `NO_MOTD=1` to hide it, or `MOTD_NOFROG=1` to hide just the frog.
+
+### Look and feel
+
+Everything uses marcy's frog colours: the welcome banner, a **marcy** colour scheme for Windows Terminal (set up automatically with the profile), the starship prompt, zellij, fzf and bat.
+
+The prompt shows the folder, git branch and status, the current Kubernetes context and namespace, the Terraform workspace, language versions inside projects, and how long slow commands took. **Contexts with "prod" in the name turn red.** Customise it in `~/.config/starship.toml`.
+
+The icons need a Nerd Font, by default marcy is shipped with Liberation Mono.
+
+### Local Kubernetes cluster
+
+marcy ships [k3s](https://k3s.io), a single-node Kubernetes that runs straight on systemd, no Docker needed. It's installed but off, so it uses no memory until you want it:
+
+```bash
+k3s-up      # start it (and on every boot), add context "k3s" to ~/.kube/config
+k9s         # or kubectl, helm... against the k3s context
+k3s-down    # stop it and keep it off; cluster data is kept for the next k3s-up
+```
+
+It comes with k3s's defaults: Traefik as ingress controller on ports 80/443, local-path storage and a load balancer, so `LoadBalancer` services work. Change the server flags in `/etc/rancher/k3s/config.yaml`. `sudo crictl` shows the cluster's containers.
 
 ## Development
 
@@ -128,7 +148,7 @@ bash scripts/test.sh icon installer  # just the fast ones
 ```
 
 | Suite | Checks |
-|---|---|
+| --- | --- |
 | `icon` | the icon is valid and still matches the frog in the motd |
 | `installer` | `install.ps1` logic, with WSL and downloads mocked (needs Pester 5) |
 | `image` | user, shell, config, every tool on PATH, and the package contents |

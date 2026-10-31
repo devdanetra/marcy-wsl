@@ -1,0 +1,3 @@
+# k3s server settings: https://docs.k3s.io/installation/configuration
+# Readable kubeconfig, so k3s-up can merge it into ~/.kube/config without sudo
+write-kubeconfig-mode: "0644"

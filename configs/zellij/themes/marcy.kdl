@@ -1,0 +1,16 @@
+// the frog's colours, same as the banner, starship and the Windows Terminal scheme
+themes {
+    marcy {
+        fg "#D6E4D6"
+        bg "#2C4A3A"
+        black "#1B2620"
+        red "#E06C6C"
+        green "#8FC470"
+        yellow "#E6C86E"
+        blue "#6CA0B8"
+        magenta "#B48EC8"
+        cyan "#ACD6CD"
+        white "#D6E4D6"
+        orange "#E6A86E"
+    }
+}

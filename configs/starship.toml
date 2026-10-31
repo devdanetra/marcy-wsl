@@ -1,0 +1,85 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
+palette = "marcy"
+format = """
+$directory$git_branch$git_state$git_status$kubernetes$terraform$python$golang$nodejs$rust$cmd_duration$status
+$character"""
+
+# the frog's colours, same as the banner and the Windows Terminal scheme
+[palettes.marcy]
+green = "#8fc470"
+moss = "#56804e"
+mint = "#acd6cd"
+teal = "#6c968c"
+text = "#d6e4d6"
+yellow = "#e6c86e"
+red = "#e06c6c"
+
+[character]
+success_symbol = "[❯](bold green)"
+error_symbol = "[❯](bold red)"
+vimcmd_symbol = "[❮](bold mint)"
+
+[directory]
+style = "bold mint"
+truncation_length = 3
+truncate_to_repo = true
+read_only = " 󰌾"
+
+[git_branch]
+symbol = " "
+style = "green"
+format = "[$symbol$branch]($style) "
+
+[git_state]
+style = "bold yellow"
+
+[git_status]
+style = "yellow"
+format = "([$all_status$ahead_behind]($style) )"
+
+# always shown: you should know which cluster kubectl talks to.
+# Production contexts turn red so they can't be missed.
+[kubernetes]
+disabled = false
+symbol = "󱃾 "
+style = "teal"
+format = "[$symbol$context( \\($namespace\\))]($style) "
+contexts = [
+  { context_pattern = ".*prod.*", style = "bold red", symbol = "󱃾 PROD " },
+]
+
+[terraform]
+symbol = "󱁢 "
+style = "moss"
+format = "[$symbol$workspace]($style) "
+
+[python]
+symbol = " "
+style = "moss"
+format = "[$symbol$version( \\($virtualenv\\))]($style) "
+
+[golang]
+symbol = " "
+style = "moss"
+format = "[$symbol$version]($style) "
+
+[nodejs]
+symbol = " "
+style = "moss"
+format = "[$symbol$version]($style) "
+
+[rust]
+symbol = " "
+style = "moss"
+format = "[$symbol$version]($style) "
+
+[cmd_duration]
+min_time = 2000
+style = "yellow"
+format = "[ $duration]($style) "
+
+[status]
+disabled = false
+style = "red"
+format = "[✗ $status]($style) "

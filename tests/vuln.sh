@@ -10,7 +10,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 image=${1:-marcy-wsl:build}
-TRIVY_IMAGE=aquasec/trivy:0.75.0
+TRIVY_IMAGE=aquasec/trivy:0.76.1
 severity=${TRIVY_SEVERITY:-HIGH,CRITICAL}
 src=$(pwd -W 2>/dev/null || pwd)
 out=dist   # relative, so it resolves the same inside the trivy container

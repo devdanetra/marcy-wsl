@@ -1,0 +1,36 @@
+{
+  "profiles": [
+    {
+      "colorScheme": "marcy",
+      "font": { "face": "LiterationMono Nerd Font Mono", "size": 11 },
+      "cursorShape": "bar",
+      "padding": "10",
+      "opacity": 97
+    }
+  ],
+  "schemes": [
+    {
+      "name": "marcy",
+      "background": "#121A16",
+      "foreground": "#D6E4D6",
+      "cursorColor": "#8FC470",
+      "selectionBackground": "#2C4A3A",
+      "black": "#1B2620",
+      "red": "#E06C6C",
+      "green": "#8FC470",
+      "yellow": "#E6C86E",
+      "blue": "#6CA0B8",
+      "purple": "#B48EC8",
+      "cyan": "#ACD6CD",
+      "white": "#D6E4D6",
+      "brightBlack": "#4A5E52",
+      "brightRed": "#F08A80",
+      "brightGreen": "#B4E08F",
+      "brightYellow": "#F2DC94",
+      "brightBlue": "#8CC0D6",
+      "brightPurple": "#CBA9DC",
+      "brightCyan": "#C8ECE4",
+      "brightWhite": "#F2F8F4"
+    }
+  ]
+}

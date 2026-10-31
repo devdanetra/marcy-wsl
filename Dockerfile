@@ -1,9 +1,8 @@
+ARG MARCY_VERSION="0.1.0"
 FROM ubuntu:24.04
 
 ENV LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
 
-# line 1: base and build tools
-# lines 2-4, sysadmin: editors and files / processes and performance / network
 RUN apt-get update && apt-get upgrade -y \
   && apt-get install -y --no-install-recommends \
   sudo curl git zsh ca-certificates unzip build-essential locales openssh-client gnupg jq \
@@ -18,9 +17,20 @@ RUN userdel -r ubuntu 2>/dev/null || true \
   && useradd -m -u 1000 -s /bin/zsh -G sudo $USER \
   && echo "$USER ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USER
 
+# k3s: local Kubernetes cluster, installed but stopped (k3s-up / k3s-down)
+RUN curl -fsSLo /usr/local/bin/k3s https://github.com/k3s-io/k3s/releases/latest/download/k3s \
+  && cd /usr/local/bin \
+  && curl -fsSL https://github.com/k3s-io/k3s/releases/latest/download/sha256sum-amd64.txt | grep ' k3s$' | sha256sum -c - \
+  && chmod 755 k3s
+COPY configs/k3s/k3s.service /etc/systemd/system/k3s.service
+COPY configs/k3s/config.yaml /etc/rancher/k3s/config.yaml
+COPY configs/k3s/crictl.yaml /etc/crictl.yaml
+COPY --chmod=755 configs/k3s/k3s-up configs/k3s/k3s-down /usr/local/bin/
+
 COPY wsl.conf /etc/wsl.conf
 COPY wsl-distribution.conf /etc/wsl-distribution.conf
 COPY assets/marcy.ico /usr/lib/wsl/marcy.ico
+COPY configs/windows-terminal.json /usr/lib/wsl/terminal-profile.json
 COPY --chmod=755 configs/motd.sh /usr/local/bin/motd
 
 USER $USER
@@ -44,7 +54,11 @@ RUN mkdir -p ~/.zsh/plugins && cd ~/.zsh/plugins \
 
 COPY --chown=$USER configs/zsh/.zshrc .zshrc
 COPY --chown=$USER configs/zellij/ .config/zellij/
+COPY --chown=$USER configs/starship.toml .config/starship.toml
 
-# last, so a new version only rebuilds this layer; motd compares it with GitHub
-ARG MARCY_VERSION=dev
+
+# Install Liberation Mono font for terminal and editor
+COPY assets/fonts/liberationMonoNerdFont/ /usr/local/share/fonts/liberationMonoNerdFont/
+RUN fc-cache -fv
+
 RUN echo "$MARCY_VERSION" | sudo tee /etc/marcy-release >/dev/null

@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Stop the local k3s cluster and keep it off on boot. Cluster data is kept; k3s-up resumes it.
+set -euo pipefail
+
+sudo systemctl disable --now k3s
+# KillMode=process leaves containerd and the pod containers running after the service stops
+sudo pkill -f /run/k3s/containerd/ || true
+echo "k3s stopped"

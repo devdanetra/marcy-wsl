@@ -1,0 +1,3 @@
+# point crictl at k3s's containerd (run it with sudo: the socket is root-only)
+runtime-endpoint: unix:///run/k3s/containerd/containerd.sock
+image-endpoint: unix:///run/k3s/containerd/containerd.sock

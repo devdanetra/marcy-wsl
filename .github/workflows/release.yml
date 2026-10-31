@@ -42,6 +42,14 @@ jobs:
           command -v pigz || sudo apt-get install -y -qq pigz
           bash scripts/build-wsl.sh dist/marcy.wsl
 
+      # only the fixed-width Mono variant is shipped; install.ps1 installs it per-user on Windows
+      - name: Package fonts
+        run: |
+          mkdir -p dist
+          (cd assets/fonts/LiberationMono && zip -q -j ../../../dist/fonts.zip LiterationMonoNerdFontMono-*.ttf LICENSE)
+          (cd dist && sha256sum fonts.zip > fonts.zip.sha256)
+          test "$(unzip -Z1 dist/fonts.zip | grep -c '\.ttf$')" -eq 4
+
       - name: Test image and package
         run: bash tests/image.sh marcy-wsl:build dist/marcy.wsl
 
@@ -96,7 +104,7 @@ jobs:
         run: |
           tag="$TAG"
           gh release create "$tag" \
-            dist/marcy.wsl dist/marcy.wsl.sha256 \
+            dist/marcy.wsl dist/marcy.wsl.sha256 dist/fonts.zip dist/fonts.zip.sha256 \
             dist/vuln-report.json dist/vuln-report.sarif dist/vuln-summary.md dist/vuln-badge.json \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \

@@ -4,8 +4,13 @@ eval "$(~/.local/bin/mise activate zsh)"
 eval "$(~/.local/bin/mise hook-env -s zsh)"
 
 # appendWindowsPath=false keeps Windows out of PATH; bring back the
-# Windows binaries (clip.exe for zellij copy, explorer.exe for `open`), appended so Linux wins
+# Windows binaries (clip.exe, explorer.exe for `open`), appended so Linux wins
 path+=(/mnt/c/Windows/System32 /mnt/c/Windows)
+# VS Code's `code` CLI, so `code .` opens the folder through the Remote - WSL extension
+# (user install first, then system-wide; (N) drops patterns that match nothing)
+vscode=(/mnt/c/Users/*/AppData/Local/Programs/Microsoft\ VS\ Code/bin(N) "/mnt/c/Program Files/Microsoft VS Code/bin"(N))
+(( $#vscode )) && path+=($vscode[1])
+unset vscode
 
 # ── history ───────────────────────────────────────────────────
 HISTFILE=~/.zsh_history
@@ -30,6 +35,7 @@ zstyle ':completion:*:descriptions' format '[%d]'
 (( $+commands[k9s] )) && source <(k9s completion zsh)
 # crictl warns on stderr about the missing /etc/crictl.yaml on every run
 (( $+commands[crictl] )) && source <(crictl completion zsh 2>/dev/null)
+(( $+commands[stern] )) && source <(stern --completion zsh)
 (( $+commands[gh] )) && source <(gh completion -s zsh)
 (( $+commands[uv] )) && source <(uv generate-shell-completion zsh)
 (( $+commands[rg] )) && source <(rg --generate complete-zsh)
@@ -52,6 +58,13 @@ bindkey '^[[1;5C' forward-word
 bindkey '^[[1;5D' backward-word
 bindkey '^[[3~' delete-char
 
+# ── theme: the frog's colours (Windows Terminal scheme "marcy") ─
+export BAT_THEME=ansi   # bat follows the terminal palette
+export FZF_DEFAULT_OPTS="--layout=reverse --height=40% --border=rounded \
+--color=bg+:#1f3328,fg:#d6e4d6,fg+:#f2f8f4,hl:#8fc470,hl+:#b4e08f,info:#6c968c \
+--color=prompt:#8fc470,pointer:#8fc470,marker:#e6c86e,spinner:#acd6cd,header:#6c968c,border:#3e6260"
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#4a5e52'
+
 # ── integrations ──────────────────────────────────────────────
 # fzf's keybindings need a terminal; without one (zsh -i -c from scripts) they error
 [[ -t 0 ]] && (( $+commands[fzf] )) && source <(fzf --zsh)
@@ -67,6 +80,8 @@ if (( $+commands[eza] )); then
 fi
 (( $+commands[bat] )) && alias cat='bat --paging=never --style=plain'
 alias k=kubectl
+alias kctx=kubectx
+alias kns=kubens
 alias tf=terraform
 alias zj=zellij
 alias ..='cd ..'

@@ -58,18 +58,16 @@ try {
     $cid = docker create marcy-wsl:local
     try { docker export $cid -o "$work\marcy.tar" } finally { docker rm -f $cid | Out-Null }
     $package = "$work\marcy.tar"
+    $fontDir = "$work\src\assets\fonts\LiberationMono"
   } else {
     $base = if ($Version -eq 'latest') { "https://github.com/$Repo/releases/latest/download" }
             else { "https://github.com/$Repo/releases/download/$Version" }
-    $package = "$work\marcy.wsl"
     Step "Downloading $Version release"
-    Invoke-WebRequest "$base/marcy.wsl" -OutFile $package
-    Invoke-WebRequest "$base/marcy.wsl.sha256" -OutFile "$package.sha256"
-
-    $expected = ((Get-Content "$package.sha256" -Raw).Trim() -split '\s+')[0]
-    $actual = (Get-FileHash $package -Algorithm SHA256).Hash
-    if ($actual -ne $expected) { throw "Checksum mismatch: expected $expected, got $actual" }
-    Step 'Checksum OK'
+    $package = Get-Verified "$base/marcy.wsl" "$work\marcy.wsl"
+    $fontZip = Get-Verified "$base/fonts.zip" "$work\fonts.zip"
+    Step 'Checksums OK'
+    $fontDir = "$work\fonts"
+    Expand-Archive $fontZip $fontDir
   }
 
   Step "Installing '$Name'"
@@ -80,6 +78,19 @@ try {
     New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
     wsl.exe --import $Name $InstallDir $package --version 2
     if ($LASTEXITCODE) { throw 'wsl --import failed' }
+  }
+
+  Step 'Installing LiterationMono Nerd Font for the current user'
+  $userFonts = "$env:LOCALAPPDATA\Microsoft\Windows\Fonts"
+  $fontReg = 'HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Fonts'
+  New-Item -ItemType Directory -Force -Path $userFonts | Out-Null
+  $fonts = @(Get-ChildItem $fontDir -Filter 'LiterationMonoNerdFontMono-*.ttf')
+  if (-not $fonts) { throw "No fonts found in $fontDir" }
+  foreach ($font in $fonts) {
+    $dest = Join-Path $userFonts $font.Name
+    # a font loaded by a running app is locked; same size means it's already installed
+    if (-not ((Test-Path $dest) -and (Get-Item $dest).Length -eq $font.Length)) { Copy-Item $font.FullName $dest -Force }
+    New-ItemProperty -Path $fontReg -Name "$($font.BaseName) (TrueType)" -Value $dest -PropertyType String -Force | Out-Null
   }
 
   Step "Done. Start it with: wsl -d $Name"

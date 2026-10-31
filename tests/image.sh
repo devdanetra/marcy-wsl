@@ -35,8 +35,15 @@ check "zsh starts without errors"        in_image '[ -z "$(zsh -i -c true 2>&1)"
 check "zsh puts mise tools on PATH"      in_image 'zsh -i -c "command -v starship zoxide fzf eza bat kubectl k9s crictl vault zellij gh rg uv go node" >/dev/null'
 check "zsh aliases load"                 in_image 'zsh -i -c "alias ls k" | grep -q eza'
 check "motd renders"                    in_image 'NO_MOTD= motd | grep -q "\[+\]"'
+check "k3s installed"                    in_image 'k3s --version'
+check "k3s service present, not enabled" in_image '[ -f /etc/systemd/system/k3s.service ] && [ ! -e /etc/systemd/system/multi-user.target.wants/k3s.service ]'
+check "k3s-up and k3s-down installed"    in_image '[ -x /usr/local/bin/k3s-up ] && [ -x /usr/local/bin/k3s-down ]'
+check "crictl points at k3s"             in_image 'grep -q /run/k3s/containerd/ /etc/crictl.yaml'
+check "terminal profile is valid JSON"   in_image 'f=$(sed -n "s/^ProfileTemplate *= *//p" /etc/wsl-distribution.conf); jq -e ".schemes[0].name == \"marcy\"" "$f"'
+check "starship config is valid"         in_image 'cd /tmp && [ -z "$(~/.local/bin/mise exec starship -- starship prompt 2>&1 >/dev/null)" ]'
+check "zellij config is valid"           in_image '~/.local/bin/mise exec zellij -- zellij setup --check | grep -q "Well defined"'
 check "mise installed"                   in_image '~/.local/bin/mise --version'
-for tool in starship fzf zoxide eza bat kubectl helm k9s crictl terraform vault zellij gh rg uv go node npm \
+for tool in starship fzf zoxide eza bat kubectl helm k9s crictl kubectx kubens stern terraform vault zellij gh rg uv go node npm \
             ansible ansible-playbook duf dust gping doggo; do
   check "mise tool: $tool"               in_image "~/.local/bin/mise which $tool"
 done

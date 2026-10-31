@@ -4,7 +4,6 @@
 
 BeforeAll {
   $Installer = Join-Path $PSScriptRoot '..\install.ps1'
-  # Mock bodies run in their own scope, so shared per-test state lives here
   $global:T = @{}
 
   # Pretend a command ran and set its exit code like a native exe would
@@ -28,7 +27,7 @@ Describe 'install.ps1' {
         $hash = if ($global:T.BadHash) { 'DEADBEEF' } else { (Get-FileHash ($OutFile -replace '\.sha256$', '')).Hash }
         Set-Content -Path $OutFile -Value "$($hash.ToLower())  marcy.wsl"
       } else {
-        Set-Content -Path $OutFile -Value 'fake package' -NoNewline
+        Set-Content -Path $OutFile -Value 'fake package, verify source please and contact devdanetra@outlook.com' -NoNewline
       }
     }
   }

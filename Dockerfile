@@ -5,7 +5,7 @@ ENV LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
 
 RUN apt-get update && apt-get upgrade -y \
   && apt-get install -y --no-install-recommends \
-  sudo curl git zsh ca-certificates unzip build-essential locales openssh-client gnupg jq \
+  sudo fontconfig curl git zsh ca-certificates unzip build-essential locales openssh-client gnupg jq \
   vim nano less tree rsync wget file zip \
   htop btop ncdu lsof strace psmisc procps sysstat iotop-c \
   iproute2 iputils-ping dnsutils traceroute mtr-tiny netcat-openbsd nmap tcpdump socat whois openssl ethtool \

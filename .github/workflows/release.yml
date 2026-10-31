@@ -46,7 +46,7 @@ jobs:
       - name: Package fonts
         run: |
           mkdir -p dist
-          (cd assets/fonts/LiberationMono && zip -q -j ../../../dist/fonts.zip LiterationMonoNerdFontMono-*.ttf LICENSE)
+          (cd assets/fonts/liberationMonoNerdFont && zip -q -j ../../../dist/fonts.zip LiterationMonoNerdFontMono-*.ttf LICENSE)
           (cd dist && sha256sum fonts.zip > fonts.zip.sha256)
           test "$(unzip -Z1 dist/fonts.zip | grep -c '\.ttf$')" -eq 4
 

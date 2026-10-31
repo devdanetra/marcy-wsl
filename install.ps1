@@ -31,6 +31,20 @@ $Repo = 'devdanetra/marcy-wsl'
 
 function Step($msg) { Write-Host "==> $msg" -ForegroundColor Green }
 
+function Get-Verified {
+  param(
+    [Parameter(Mandatory)] [string]$Url,
+    [Parameter(Mandatory)] [string]$OutFile
+  )
+  $hashUrl = "$Url.sha256"
+  Invoke-WebRequest -Uri $Url -OutFile $OutFile
+  Invoke-WebRequest -Uri $hashUrl -OutFile "$OutFile.sha256"
+  $expected = (Get-Content "$OutFile.sha256").Split()[0]
+  $actual = (Get-FileHash $OutFile).Hash
+  if ($expected -ne $actual) { throw "Checksum mismatch for $Url, verify source or contact devdanetra@outlook.com" }
+  else { return $OutFile }
+}
+
 if (-not (Get-Command wsl.exe -ErrorAction SilentlyContinue)) {
   throw 'WSL is not installed. Run "wsl --install --no-distribution" as admin, reboot, then retry.'
 }
@@ -58,7 +72,7 @@ try {
     $cid = docker create marcy-wsl:local
     try { docker export $cid -o "$work\marcy.tar" } finally { docker rm -f $cid | Out-Null }
     $package = "$work\marcy.tar"
-    $fontDir = "$work\src\assets\fonts\LiberationMono"
+    $fontDir = "$work\src\assets\fonts\liberationMonoNerdFont"
   } else {
     $base = if ($Version -eq 'latest') { "https://github.com/$Repo/releases/latest/download" }
             else { "https://github.com/$Repo/releases/download/$Version" }

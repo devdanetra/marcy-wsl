@@ -8,6 +8,12 @@ BeforeAll {
 
   # Pretend a command ran and set its exit code like a native exe would
   function Exit-With($code) { $global:LASTEXITCODE = $code }
+
+  # Drop a fake font where the installer expects to find one
+  function New-FakeFont($dir) {
+    New-Item -ItemType Directory -Force -Path $dir | Out-Null
+    Set-Content -Path (Join-Path $dir 'LiterationMonoNerdFontMono-Regular.ttf') -Value 'fake font'
+  }
 }
 
 AfterAll { Remove-Variable T -Scope Global -ErrorAction SilentlyContinue }
@@ -30,6 +36,9 @@ Describe 'install.ps1' {
         Set-Content -Path $OutFile -Value 'fake package, verify source please and contact devdanetra@outlook.com' -NoNewline
       }
     }
+    Mock Expand-Archive { New-FakeFont $DestinationPath }
+    Mock Copy-Item {}
+    Mock New-ItemProperty {}
   }
 
   Context 'existing distro' {
@@ -114,7 +123,10 @@ Describe 'install.ps1' {
 
   Context '-FromSource' {
     BeforeEach {
-      Mock git { Exit-With 0 }
+      Mock git {
+        New-FakeFont (Join-Path $args[-1] 'assets\fonts\liberationMonoNerdFont')
+        Exit-With 0
+      }
       Mock docker {
         Exit-With 0
         if ($args[0] -eq 'create') { return 'abc123' }

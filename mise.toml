@@ -1,6 +1,7 @@
 [tools]
 fzf = "latest"
 zoxide = "latest"
+vscode-cli = "latest"
 eza = "latest"
 bat = "latest"
 kubectl = "latest"

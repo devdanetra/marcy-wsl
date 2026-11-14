@@ -5,6 +5,7 @@ ENV LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
 
 RUN apt-get update && apt-get upgrade -y \
   && apt-get install -y --no-install-recommends \
+  systemd systemd-sysv dbus \
   sudo fontconfig curl git zsh ca-certificates unzip build-essential locales openssh-client gnupg jq \
   vim nano less tree rsync wget file zip \
   htop btop ncdu lsof strace psmisc procps sysstat iotop-c \
